@@ -51,7 +51,7 @@ const LOCATION_TYPES: LocationType[] = ["国内", "海外"];
 
 type Screen = "form" | "suggestions" | "detail" | "plan" | "saved";
 type PlanSegment = {
-  text: string;
+  label: string;
   url?: string;
 };
 
@@ -98,26 +98,47 @@ function splitMarkdownLinks(line: string): PlanSegment[] {
 
   while ((match = linkPattern.exec(line)) !== null) {
     if (match.index > cursor) {
-      segments.push({ text: line.slice(cursor, match.index) });
+      segments.push({ label: line.slice(cursor, match.index) });
     }
-    segments.push({ text: match[1], url: match[2] });
+    segments.push({ label: match[1], url: match[2] });
     cursor = match.index + match[0].length;
   }
 
   if (cursor < line.length) {
-    segments.push({ text: line.slice(cursor) });
+    segments.push({ label: line.slice(cursor) });
   }
 
-  return segments.length ? segments : [{ text: line }];
+  return segments.length ? segments : [{ label: line }];
 }
 
-async function openPlanUrl(url: string) {
-  const canOpen = await Linking.canOpenURL(url);
-  if (!canOpen) {
-    Alert.alert("リンクを開けません", url);
+function sanitizeUrl(url: string): string {
+  return url
+    .trim()
+    .replace(/[。、，,.）)\]}]+$/g, "")
+    .replace(/\s+/g, "");
+}
+
+function googleSearchUrl(label: string): string {
+  return `https://www.google.com/search?q=${encodeURIComponent(label.trim())}`;
+}
+
+async function openPlanUrl(url: string, label: string) {
+  const cleanedUrl = sanitizeUrl(url);
+  if (/^https?:\/\//.test(cleanedUrl)) {
+    const canOpen = await Linking.canOpenURL(cleanedUrl);
+    if (canOpen) {
+      await Linking.openURL(cleanedUrl);
+      return;
+    }
+  }
+
+  const fallbackUrl = googleSearchUrl(label);
+  const canOpenFallback = await Linking.canOpenURL(fallbackUrl);
+  if (!canOpenFallback) {
+    Alert.alert("リンクを開けません", label);
     return;
   }
-  await Linking.openURL(url);
+  await Linking.openURL(fallbackUrl);
 }
 
 function createInitialConditions(): TravelConditions {
@@ -561,11 +582,11 @@ function PlanText({ text }: { text: string }) {
               const url = segment.url;
               return (
                 <Text
-                  key={`${lineIndex}-${segmentIndex}-${segment.text}`}
+                  key={`${lineIndex}-${segmentIndex}-${segment.label}`}
                   style={url ? styles.planLink : undefined}
-                  onPress={url ? () => openPlanUrl(url) : undefined}
+                  onPress={url ? () => openPlanUrl(url, segment.label) : undefined}
                 >
-                  {segment.text}
+                  {segment.label}
                 </Text>
               );
             })}
