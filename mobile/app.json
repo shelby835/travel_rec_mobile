@@ -1,0 +1,26 @@
+{
+  "expo": {
+    "name": "travel_rec",
+    "slug": "travel-rec",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "backgroundColor": "#f7f3ec"
+    },
+    "assetBundlePatterns": ["**/*"],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.example.travelrec",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "package": "com.example.travelrec"
+    },
+    "extra": {
+      "apiBaseUrl": "http://192.168.1.3:8000"
+    }
+  }
+}
